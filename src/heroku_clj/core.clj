@@ -36,7 +36,8 @@
   [resource key]
   (let [u (full-url resource)]
     (try
-      (request u key)
+      (with-meta
+        (request u key) {:url u :key key})
     (catch Exception e
       (print (.getMessage e))))))
 
@@ -60,3 +61,5 @@
   "List processes for an app"
   [key app]
   (do-request (format "apps/%s/ps" app) key))
+
+
