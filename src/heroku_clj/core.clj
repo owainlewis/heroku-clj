@@ -20,7 +20,7 @@
    - url the request url
    - api-key your api key
    - request-fn a http/get or http/post etc"
-  [url api-key request-fn & params]
+  [request-fn url api-key & params]
   `(let [auth-params# {:basic-auth ["" ~api-key]}]
      (when-let
        [response# (~request-fn ~url
@@ -35,7 +35,7 @@
   [url api-key]
   (let [result
         (json/parse-string
-          (request->> url api-key http/get))]
+          (request->> http/get url api-key))]
     (if (= (class result)
             clojure.lang.PersistentHashMap)
       (symbolize-keys result)
