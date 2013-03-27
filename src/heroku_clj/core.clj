@@ -15,18 +15,31 @@
     (for [[k v] m]
       [(keyword k) v])))
 
+(defmacro request->>
+  "Make a generic request with required params
+   - url the request url
+   - api-key your api key
+   - request-fn a http/get or http/post etc"
+  [url api-key request-fn & params]
+  `(let [auth-params# {:basic-auth ["" ~api-key]}]
+     (when-let
+       [response# (~request-fn ~url
+                    (merge {:accept :json}
+                            auth-params#))]
+       (get response# :body))))
+
 (defn request
   "Make a request to the Heroku API
    - url the request url
-   - api-key your api key
-  "
+   - api-key your api key"
   [url api-key]
-  (let [auth-params {:basic-auth ["" api-key]}]
-    (when-let [response (http/get url (merge {:accept :json} auth-params))]
-      (let [result (->> (:body response) json/parse-string)]
-        (if (= (class result) clojure.lang.PersistentHashMap)
-          (symbolize-keys result)
-          (map symbolize-keys result))))))
+  (let [result
+        (json/parse-string
+          (request->> url api-key http/get))]
+    (if (= (class result)
+            clojure.lang.PersistentHashMap)
+      (symbolize-keys result)
+      (map symbolize-keys result))))
 
 (defn full-url [path]
   (str "https://api.heroku.com/" path))
@@ -37,7 +50,8 @@
   (let [u (full-url resource)]
     (try
       (with-meta
-        (request u key) {:url u :key key})
+        (request u key)
+        {:url u :key key})
     (catch Exception e
       (print (.getMessage e))))))
 
@@ -61,5 +75,4 @@
   "List processes for an app"
   [key app]
   (do-request (format "apps/%s/ps" app) key))
-
 
