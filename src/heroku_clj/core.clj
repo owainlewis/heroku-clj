@@ -2,11 +2,12 @@
   (:require [clj-http.client :as http]
             [cheshire.core :as json]))
 
-(def ^:dynamic key
+(def ^:dynamic *key*
+  "Our application API key"
   (atom ""))
 
 (defn set-api-key! [value]
-  (reset! key value))
+  (reset! *key* value))
 
 (defn symbolize-keys
   "Take all string keys and turn them into symbols"
@@ -61,6 +62,12 @@
 
 (defmacro simple-request [url key]
   `(do-request :get ~url ~key))
+
+(defn with-key
+  "Utility function so that we don't
+   need to keep passing around our API key"
+  [fn & args]
+  (apply (partial fn @*key*) args))
 
 ;; Addons
 
@@ -141,8 +148,10 @@
 (defn app-status
   "Is our application still running?"
   [key app]
-  (map (juxt :state :app_name)
-    (list-processes key app)))
+  (->> (list-processes key app)
+       (map (juxt :app_name :state))
+       (map (fn [[k _]] [(keyword k) _]))
+       (into {})))
 
 ;; Releases
 

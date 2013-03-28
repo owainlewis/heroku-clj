@@ -8,6 +8,19 @@ All requests require an API key and return a response as JSON.
 
 Your API key can be found under account settings on Heroku.
 
+## End points
+
++ Addons
++ Apps
++ Collaborators
++ Config
++ Domains
++ Keys
++ Logs
++ Processes
++ Releases
++ Stacks
+
 ### Addons
 
 List all addons (only returns the addon name by default)
@@ -54,6 +67,21 @@ Show process information for an app
 
 ```clojure
 (list-processes "YOURAPIKEY" "myapp")
+```
+
+## Alternative DSL
+
+If you don't want to pass an API key to every function you can use with-key to make things easier
+
+First you need to set your api-key globally.
+
+```clojure
+(set-api-key! "YOURKEY")
+```
+Then you can use with-key to call functions without having to pass in the api key
+
+```clojure
+(with-key apps "forwardio")
 ```
 
 ## License
