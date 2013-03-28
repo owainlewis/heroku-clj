@@ -100,3 +100,19 @@
   [key app]
   (do-request :get (format "apps/%s/ps" app) key))
 
+;; Stacks 
+
+(defn stacks
+  "List all available stacks for an app"
+  [key app]
+  (do-request :get (format "apps/%s/stack" app) key))
+
+(defn current-stack
+  "Show the current stack running for an app"
+  [key app]
+  (->> (stacks key app)
+       (filter (fn [m]
+         (= true (get m :current))))
+       first
+       :name))
+
