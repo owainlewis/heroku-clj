@@ -59,6 +59,9 @@
     (catch Exception e
       (print (.getMessage e))))))
 
+(defmacro simple-request [url key]
+  `(do-request :get ~url ~key))
+
 ;; Addons
 
 (defn addons
@@ -93,19 +96,67 @@
   ([name])
   ([name stack]))
 
+;; Config
+
+(defn config
+  "List config vars for an app"
+  [key app]
+  (let [u (format "apps/%s/config_vars" app)
+        response (request->> http/get (full-url u) key)]
+    (->> (json/parse-string response)
+         (symbolize-keys))))
+
+;; Collaborators
+
+(defn collaborators
+  "List collaborators for an app"
+  [key app]
+  (simple-request (format "apps/%s/collaborators" app) key))
+
+;; Domains
+
+(defn domains
+  "List domains for an app"
+  [key app]
+  (simple-request (format "apps/%s/domains" app) key))
+
+(defn domain-names [key app]
+  (into []
+    (map :domain (domains key app))))
+
+;; Keys
+
+(defn keys
+  "List SSH keys for an app"
+ [key]
+ (simple-request "/user/keys" key))
+
 ;; Processes
 
 (defn list-processes
   "List processes for an app"
   [key app]
-  (do-request :get (format "apps/%s/ps" app) key))
+  (simple-request (format "apps/%s/ps" app) key))
 
-;; Stacks 
+(defn app-status
+  "Is our application still running?"
+  [key app]
+  (map (juxt :state :app_name)
+    (list-processes key app)))
+
+;; Releases
+
+(defn releases
+  "List releases for an app"
+  [key app]
+  (simple-request (format "apps/%s/releases" app) key))
+
+;; Stacks
 
 (defn stacks
   "List all available stacks for an app"
   [key app]
-  (do-request :get (format "apps/%s/stack" app) key))
+  (simple-request (format "apps/%s/stack" app) key))
 
 (defn current-stack
   "Show the current stack running for an app"
