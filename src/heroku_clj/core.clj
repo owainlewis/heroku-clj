@@ -32,10 +32,10 @@
   "Make a request to the Heroku API
    - url the request url
    - api-key your api key"
-  [url api-key]
+  [method url api-key]
   (let [result
         (json/parse-string
-          (request->> http/get url api-key))]
+          (request->> method url api-key))]
     (if (= (class result)
             clojure.lang.PersistentHashMap)
       (symbolize-keys result)
@@ -46,22 +46,46 @@
 
 (defn do-request
   "Performs a request and handles any exceptions"
-  [resource key]
-  (let [u (full-url resource)]
+  [type resource key]
+  (let [u (full-url resource)
+        req-fn (condp = type
+                :get  http/get
+                :post http/post
+                :else http/get)]
     (try
       (with-meta
-        (request u key)
+        (request req-fn u key)
         {:url u :key key})
     (catch Exception e
       (print (.getMessage e))))))
+
+;; Addons
+
+(defn addons
+  "List all availible add ons"
+  [key]
+  (->> (do-request :get "addons" key)
+       (map :name)))
+
+(defn list-addons
+  "List all addons for an app"
+  [key app]
+  (do-request :get
+    (format "apps/%s/addons" app) key))
+
+(defn create-addon [key app addon]
+  (do-request :post
+    (format "apps/%s/addons/%s" app addon) key))
 
 ;; Apps
 
 (defn app
  ([key]
-   (do-request "apps" key))
+   (do-request :get "apps" key))
  ([key app]
-   (do-request (str "apps/" app) key)))
+   (do-request :get (str "apps/" app) key)))
+
+(defn apps [k] (app k))
 
 (defn app-create
   "Create a new application"
@@ -74,5 +98,5 @@
 (defn list-processes
   "List processes for an app"
   [key app]
-  (do-request (format "apps/%s/ps" app) key))
+  (do-request :get (format "apps/%s/ps" app) key))
 

@@ -8,6 +8,26 @@ All requests require an API key and return a response as JSON.
 
 Your API key can be found under account settings on Heroku.
 
+### Addons
+
+List all addons (only returns the addon name by default)
+
+```clojure
+(addons "YOURAPIKEY")
+```
+
+List addons for an application
+
+```clojure
+(addons "YOURAPIKEY" "YOURAPP")
+```
+
+Create a new addon
+
+```clojure
+(create-addon "YOURAPIKEY" "YOURAPP" "dbinsights:basic")
+```
+
 ### Apps
 
 List all your apps on Heroku
