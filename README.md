@@ -82,7 +82,6 @@ Then you can use with-key to call functions without having to pass in the api ke
 
 ```clojure
 (with-key apps "forwardio")
-```
 
 ## License
 

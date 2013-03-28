@@ -16,7 +16,7 @@
     (for [[k v] m]
       [(keyword k) v])))
 
-(defmacro request->>
+(defmacro <<<
   "Make a generic request with required params
    - url the request url
    - api-key your api key
@@ -36,7 +36,7 @@
   [method url api-key]
   (let [result
         (json/parse-string
-          (request->> method url api-key))]
+          (<<< method url api-key))]
     (if (= (class result)
             clojure.lang.PersistentHashMap)
       (symbolize-keys result)
@@ -109,7 +109,7 @@
   "List config vars for an app"
   [key app]
   (let [u (format "apps/%s/config_vars" app)
-        response (request->> http/get (full-url u) key)]
+        response (<<< http/get (full-url u) key)]
     (->> (json/parse-string response)
          (symbolize-keys))))
 
