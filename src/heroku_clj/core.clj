@@ -2,6 +2,9 @@
   (:require [clj-http.client :as http]
             [cheshire.core :as json]))
 
+;; General helpers
+;; *************************************
+
 (def ^:dynamic *key*
   "Our application API key"
   (atom ""))
@@ -45,20 +48,25 @@
 (defn full-url [path]
   (str "https://api.heroku.com/" path))
 
+(defn ^:private build-http-request
+  "Make a HTTP request and returns it as a hash"
+  [key method url query-params]
+  (let [full-url (full-url url)]
+    (println full-url)
+    {:method method
+     :as :json
+     :basic-auth ["" key]
+     :query-params query-params
+     :url full-url}))
+
 (defn do-request
-  "Performs a request and handles any exceptions"
-  [type resource key]
-  (let [u (full-url resource)
-        req-fn (condp = type
-                :get  http/get
-                :post http/post
-                :else http/get)]
-    (try
-      (with-meta
-        (request req-fn u key)
-        {:url u :key key})
-    (catch Exception e
-      (print (.getMessage e))))))
+  "Performs a HTTP request to the Heroku API"
+  ([type resource key params]
+    (http/request
+      (build-http-request key type resource params)))
+  ([type resource key]
+    (http/request
+      (build-http-request key type resource {}))))
 
 (defmacro simple-request [url key]
   `(do-request :get ~url ~key))
@@ -70,7 +78,7 @@
   (apply (partial fn @*key*) args))
 
 ;; Addons
-
+;; *************************************
 (defn addons
   "List all availible add ons"
   [key]
@@ -88,7 +96,7 @@
     (format "apps/%s/addons/%s" app addon) key))
 
 ;; Apps
-
+;; *************************************
 (defn app
  ([key]
    (do-request :get "apps" key))
@@ -99,12 +107,12 @@
 
 (defn app-create
   "Create a new application"
-  ([])
-  ([name])
-  ([name stack]))
+  ([key] (do-request :post "apps" key))
+  ([key name] )
+  ([key name stack] ))
 
 ;; Config
-
+;; *************************************
 (defn config
   "List config vars for an app"
   [key app]
@@ -114,14 +122,14 @@
          (symbolize-keys))))
 
 ;; Collaborators
-
+;; *************************************
 (defn collaborators
   "List collaborators for an app"
   [key app]
   (simple-request (format "apps/%s/collaborators" app) key))
 
 ;; Domains
-
+;; *************************************
 (defn domains
   "List domains for an app"
   [key app]
@@ -132,14 +140,14 @@
     (map :domain (domains key app))))
 
 ;; Keys
-
+;; *************************************
 (defn keys
   "List SSH keys for an app"
  [key]
  (simple-request "/user/keys" key))
 
 ;; Processes
-
+;; *************************************
 (defn list-processes
   "List processes for an app"
   [key app]
@@ -154,14 +162,14 @@
        (into {})))
 
 ;; Releases
-
+;; *************************************
 (defn releases
   "List releases for an app"
   [key app]
   (simple-request (format "apps/%s/releases" app) key))
 
 ;; Stacks
-
+;; *************************************
 (defn stacks
   "List all available stacks for an app"
   [key app]
