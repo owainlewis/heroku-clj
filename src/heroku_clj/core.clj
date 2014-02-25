@@ -1,7 +1,7 @@
 (ns heroku-clj.core
   (:require [clj-http.client :as http]
             [cheshire.core :as json]
-            [clojure.walk :refer [keywordize-keys]))
+            [clojure.walk :refer [keywordize-keys]]))
 
 ;; General helpers
 ;; *************************************
@@ -13,7 +13,7 @@
 (defn set-api-key! [value]
   (reset! *key* value))
 
-(defmacro <<<
+(defmacro http>>
   "Make a generic request with required params
    - url the request url
    - api-key your api key
@@ -33,11 +33,11 @@
   [method url api-key]
   (let [result
         (json/parse-string
-          (<<< method url api-key))]
+          (http>> method url api-key))]
     (if (= (class result)
             clojure.lang.PersistentHashMap)
       (keywordize-keys result)
-      (map keywordize-keys result))))
+        (map keywordize-keys result))))
 
 (defn full-url [path]
   (str "https://api.heroku.com/" path))
@@ -46,23 +46,23 @@
   "Make a HTTP request and returns it as a hash"
   [key method url query-params]
   (let [full-url (full-url url)]
-    (println full-url)
-    {:method method
-     :as :json
-     :basic-auth ["" key]
-     :query-params query-params
-     :url full-url}))
+    { :method method
+      :basic-auth ["" key]
+      :as :json
+      :query-params query-params
+      :url full-url }))
 
 (defn do-request
   "Performs a HTTP request to the Heroku API"
   ([type resource key params]
-    (http/request
-      (build-http-request key type resource params)))
+    (let [r (build-http-request key type resource params)]
+      (->> (http/request r) :body)))
   ([type resource key]
-    (http/request
-      (build-http-request key type resource {}))))
+    (do-request type resource key {})))
 
-(defmacro simple-request [url key]
+(defmacro simple-request
+  "A simple get request helper"
+  [url key]
   `(do-request :get ~url ~key))
 
 (defn with-key
@@ -99,6 +99,9 @@
 
 (defn apps [k] (app k))
 
+(defn app-names [k]
+  (map :name (apps k)))
+
 (defn app-create
   "Create a new application"
   ([key] (do-request :post "apps" key))
@@ -111,7 +114,7 @@
   "List config vars for an app"
   [key app]
   (let [u (format "apps/%s/config_vars" app)
-        response (<<< http/get (full-url u) key)]
+        response (http>> http/get (full-url u) key)]
     (->> (json/parse-string response)
          (keywordize-keys))))
 
