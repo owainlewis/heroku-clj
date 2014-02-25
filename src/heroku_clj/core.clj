@@ -1,6 +1,7 @@
 (ns heroku-clj.core
   (:require [clj-http.client :as http]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [clojure.walk :refer [keywordize-keys]))
 
 ;; General helpers
 ;; *************************************
@@ -11,13 +12,6 @@
 
 (defn set-api-key! [value]
   (reset! *key* value))
-
-(defn symbolize-keys
-  "Take all string keys and turn them into symbols"
-  [m]
-  (into {}
-    (for [[k v] m]
-      [(keyword k) v])))
 
 (defmacro <<<
   "Make a generic request with required params
@@ -42,8 +36,8 @@
           (<<< method url api-key))]
     (if (= (class result)
             clojure.lang.PersistentHashMap)
-      (symbolize-keys result)
-      (map symbolize-keys result))))
+      (keywordize-keys result)
+      (map keywordize-keys result))))
 
 (defn full-url [path]
   (str "https://api.heroku.com/" path))
@@ -119,7 +113,7 @@
   (let [u (format "apps/%s/config_vars" app)
         response (<<< http/get (full-url u) key)]
     (->> (json/parse-string response)
-         (symbolize-keys))))
+         (keywordize-keys))))
 
 ;; Collaborators
 ;; *************************************
@@ -183,4 +177,3 @@
          (= true (get m :current))))
        first
        :name))
-
