@@ -176,7 +176,6 @@
   "Show the current stack running for an app"
   [key app]
   (->> (stacks key app)
-       (filter (fn [m]
-         (= true (get m :current))))
+       (filter #(true? (get % :current)))
        first
        :name))
