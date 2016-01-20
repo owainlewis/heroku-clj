@@ -3,9 +3,6 @@
             [cheshire.core :as json]
             [clojure.walk :refer [keywordize-keys]]))
 
-;; General helpers
-;; *************************************
-
 (def ^:dynamic *key*
   "Our application API key"
   (atom ""))
@@ -71,8 +68,6 @@
   [fn & args]
   (apply (partial fn @*key*) args))
 
-;; Addons
-;; *************************************
 (defn addons
   "List all availible add ons"
   [key]
@@ -89,8 +84,6 @@
   (do-request :post
     (format "apps/%s/addons/%s" app addon) key))
 
-;; Apps
-;; *************************************
 (defn app
  ([key]
    (do-request :get "apps" key))
@@ -108,8 +101,6 @@
   ([key name] )
   ([key name stack] ))
 
-;; Config
-;; *************************************
 (defn config
   "List config vars for an app"
   [key app]
@@ -118,15 +109,11 @@
     (->> (json/parse-string response)
          (keywordize-keys))))
 
-;; Collaborators
-;; *************************************
 (defn collaborators
   "List collaborators for an app"
   [key app]
   (simple-request (format "apps/%s/collaborators" app) key))
 
-;; Domains
-;; *************************************
 (defn domains
   "List domains for an app"
   [key app]
@@ -136,15 +123,11 @@
   (into []
     (map :domain (domains key app))))
 
-;; Keys
-;; *************************************
 (defn keys
   "List SSH keys for an app"
  [key]
  (simple-request "/user/keys" key))
 
-;; Processes
-;; *************************************
 (defn list-processes
   "List processes for an app"
   [key app]
@@ -158,15 +141,11 @@
        (map (fn [[k _]] [(keyword k) _]))
        (into {})))
 
-;; Releases
-;; *************************************
 (defn releases
   "List releases for an app"
   [key app]
   (simple-request (format "apps/%s/releases" app) key))
 
-;; Stacks
-;; *************************************
 (defn stacks
   "List all available stacks for an app"
   [key app]
